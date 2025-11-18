@@ -25,7 +25,7 @@ public class ReviewsDAO {
     }
 
     // insert review
-    public static int insert(Reviews r) throws SQLException {
+    public int insert(Reviews r) throws SQLException {
         String insertReview = "INSERT INTO reviews (person_id, rating, comments) VALUES (?,?,?)";
         try (Connection c = DBConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(insertReview, Statement.RETURN_GENERATED_KEYS)) {
@@ -40,7 +40,7 @@ public class ReviewsDAO {
         return -1;
     }
 
-    public static void update(Reviews r) throws SQLException {
+    public void update(Reviews r) throws SQLException {
         String sql = "UPDATE reviews SET person_id=?, rating=?, comments=?, review_date=? WHERE review_id=?";
         try (Connection c = DBConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -53,7 +53,7 @@ public class ReviewsDAO {
         }
     }
 
-    public static void delete(int reviewID) throws SQLException {
+    public void delete(int reviewID) throws SQLException {
         String sql = "DELETE FROM reviews WHERE review_id=?";
         try (Connection c = DBConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -62,3 +62,4 @@ public class ReviewsDAO {
         }
     }
 }
+
