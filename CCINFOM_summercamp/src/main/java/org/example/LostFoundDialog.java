@@ -97,8 +97,12 @@ public class LostFoundDialog extends JDialog {
         lostFound.setLocationFound(txtLocation.getText().trim());
         lostFound.setStatus((String) cbStatus.getSelectedItem());
 
+        boolean emptyID = true;
+        boolean emptyDate = true;
+
         String claimedByText = txtClaimedBy.getText().trim();
         if (!claimedByText.isEmpty()) {
+            emptyID = false;
             try {
                 lostFound.setClaimedByPersonId(Integer.parseInt(claimedByText));
             } catch (NumberFormatException ex) {
@@ -111,6 +115,7 @@ public class LostFoundDialog extends JDialog {
 
         String claimedDateText = txtClaimedDate.getText().trim();
         if (!claimedDateText.isEmpty()) {
+            emptyDate = false;
             try {
                 lostFound.setClaimedDate(LocalDate.parse(claimedDateText));
             } catch (DateTimeParseException ex) {
@@ -119,6 +124,11 @@ public class LostFoundDialog extends JDialog {
             }
         } else {
             lostFound.setClaimedDate(null);
+        }
+
+        if (cbStatus.getSelectedItem().equals("claimed") && (emptyID || emptyDate)) {
+            JOptionPane.showMessageDialog(this, "Please fill up missing cells", "Validation", JOptionPane.WARNING_MESSAGE);
+            return;
         }
 
         saved = true;
