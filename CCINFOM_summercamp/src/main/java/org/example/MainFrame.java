@@ -14,6 +14,7 @@ public class MainFrame extends JFrame {
     private final PersonDAO personDAO = new PersonDAO();
     private final ItemDAO itemDAO = new ItemDAO();
     private final ActivityDAO activityDAO = new ActivityDAO();
+    private final ActivityRegDAO activityRegDAO = new ActivityRegDAO(); 
     private final TransactionDAO transactionDAO = new TransactionDAO();
     private final ReviewsDAO reviewsDAO = new ReviewsDAO();
     private final CampAreaDAO campAreaDAO = new CampAreaDAO();
@@ -28,6 +29,7 @@ public class MainFrame extends JFrame {
         tabs.addTab("Persons", createPersonPanel());
         tabs.addTab("Items", createItemPanel());
         tabs.addTab("Activities", createActivityPanel());
+        tabs.addTab("Activity Registration", createActivityRegPanel()); 
         tabs.addTab("Transactions", createTransactionPanel());
         tabs.addTab("Reviews", createReviewsPanel());
         tabs.addTab("Camp Area", createCampAreaPanel());
@@ -441,6 +443,58 @@ public class MainFrame extends JFrame {
         btnRefresh.doClick();
         return panel;
     }
+
+        private JPanel createActivityRegPanel() {
+        JPanel p = new JPanel(new BorderLayout());
+        String[] cols = {"Registation ID", "Activity ID", "Person ID", "Status", "Registered At"};
+        DefaultTableModel model = new DefaultTableModel(cols,0) { public boolean isCellEditable(int r,int c){return false;}};
+        JTable table = new JTable(model);
+        JButton btnRefresh = new JButton("Refresh");
+        JButton btnAdd = new JButton("Add");
+        JButton btnEdit = new JButton("Edit");
+        JButton btnDelete = new JButton("Delete");
+        JPanel top = new JPanel();
+        top.add(btnRefresh); top.add(btnAdd); top.add(btnEdit); top.add(btnDelete);
+        p.add(top, BorderLayout.NORTH);
+        p.add(new JScrollPane(table), BorderLayout.CENTER);
+
+        btnRefresh.addActionListener(e -> {
+            try {
+                model.setRowCount(0);
+                List<ActivityReg> all = activityRegDAO.listAll();
+                for (ActivityReg reg: all) model.addRow(new Object[]{reg.getRegistrationId(), reg.getActivityId(), reg.getPersonId(), reg.getStatus(), reg.getRegisteredAt()});
+            } catch (SQLException ex) { showError(ex); }
+        });
+
+        btnAdd.addActionListener(e -> {
+            ActivityRegForm dlg = new ActivityRegForm(this, null);
+            dlg.setVisible(true);
+            if (dlg.saved()) {
+                try { activityRegDAO.insert(dlg.getActivityReg()); btnRefresh.doClick(); } catch (SQLException ex) { showError(ex); }
+            }
+        });
+
+        btnEdit.addActionListener(e -> {
+            int id = getSelectedIdFromTable(table, model);
+            if (id < 0) return;
+            try {
+                ActivityReg reg = activityRegDAO.listAll().stream().filter(x->x.getRegistrationId()==id).findFirst().orElse(null);
+                ActivityRegForm dlg = new ActivityRegForm(this, reg);
+                dlg.setVisible(true);
+                if (dlg.saved()) { activityRegDAO.update(dlg.getActivityReg()); btnRefresh.doClick(); }
+            } catch (SQLException ex) { showError(ex); }
+        });
+
+        btnDelete.addActionListener(e -> {
+            int id = getSelectedIdFromTable(table, model);
+            if (id < 0) return;
+            if (JOptionPane.showConfirmDialog(this,"Delete activity registration?","Confirm",JOptionPane.YES_NO_OPTION)!=JOptionPane.YES_OPTION) return;
+            try { activityRegDAO.delete(id); btnRefresh.doClick(); } catch (SQLException ex) { showError(ex); }
+        });
+
+        btnRefresh.doClick();
+        return p;
+    }
     
     private void showError(Exception ex) {
         ex.printStackTrace();
@@ -458,3 +512,4 @@ public class MainFrame extends JFrame {
         catch (NumberFormatException ex) { return -1; }
     }
 }
+
