@@ -252,6 +252,58 @@ public class MainFrame extends JFrame {
         return p;
     }
 
+     private JPanel createReviewsPanel() {
+        JPanel p = new JPanel(new BorderLayout());
+        String[] cols = {"Review ID","Camper ID", "Counselor ID","Rating","Comments", "Review Date"};
+        DefaultTableModel model = new DefaultTableModel(cols,0) { public boolean isCellEditable(int r,int c){return false;}};
+        JTable table = new JTable(model);
+        JButton btnRefresh = new JButton("Refresh");
+        JButton btnAdd = new JButton("Add");
+        JButton btnEdit = new JButton("Edit");
+        JButton btnDelete = new JButton("Delete");
+        JPanel top = new JPanel();
+        top.add(btnRefresh); top.add(btnAdd); top.add(btnEdit); top.add(btnDelete);
+        p.add(top, BorderLayout.NORTH);
+        p.add(new JScrollPane(table), BorderLayout.CENTER);
+
+        btnRefresh.addActionListener(e -> {
+            try {
+                model.setRowCount(0);
+                List<Reviews> all = reviewsDAO.listAll();
+                for (Reviews r: all) model.addRow(new Object[]{r.getReviewID(), r.getCamperID(), r.getCounselorID(), r.getRating(), r.getComments(), r.getReviewDate()});
+            } catch (SQLException ex) { showError(ex); }
+        });
+
+        btnAdd.addActionListener(e -> {
+            ReviewsFormDialog dlg = new ReviewsFormDialog(this, null);
+            dlg.setVisible(true);
+            if (dlg.saved()) {
+                try { reviewsDAO.insert(dlg.getReviews()); btnRefresh.doClick(); } catch (SQLException ex) { showError(ex); }
+            }
+        });
+
+        btnEdit.addActionListener(e -> {
+            int id = getSelectedIdFromTable(table, model);
+            if (id < 0) return;
+            try {
+                Reviews r = reviewsDAO.listAll().stream().filter(x->x.getReviewID()==id).findFirst().orElse(null);
+                ReviewsFormDialog dlg = new ReviewsFormDialog(this, r);
+                dlg.setVisible(true);
+                if (dlg.saved()) { reviewsDAO.update(dlg.getReviews()); btnRefresh.doClick(); }
+            } catch (SQLException ex) { showError(ex); }
+        });
+
+        btnDelete.addActionListener(e -> {
+            int id = getSelectedIdFromTable(table, model);
+            if (id < 0) return;
+            if (JOptionPane.showConfirmDialog(this,"Delete selected activity?","Confirm",JOptionPane.YES_NO_OPTION)!=JOptionPane.YES_OPTION) return;
+            try { reviewsDAO.delete(id); btnRefresh.doClick(); } catch (SQLException ex) { showError(ex); }
+        });
+
+        btnRefresh.doClick();
+        return p;
+    }
+
     private void showError(Exception ex) {
         ex.printStackTrace();
         JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
@@ -268,4 +320,5 @@ public class MainFrame extends JFrame {
         catch (NumberFormatException ex) { return -1; }
     }
 }
+
 
