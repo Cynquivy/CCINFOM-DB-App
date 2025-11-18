@@ -29,6 +29,7 @@ public class MainFrame extends JFrame {
         tabs.addTab("Activities", createActivityPanel());
         tabs.addTab("Transactions", createTransactionPanel());
         tabs.addTab("Reviews", createReviewsPanel());
+        tabs.addTab("Lost and Found", createLostFoundPanel());
         add(tabs);
     }
 
@@ -354,5 +355,105 @@ public class MainFrame extends JFrame {
         try { return Integer.parseInt(idObj.toString()); }
         catch (NumberFormatException ex) { return -1; }
     }
-}
 
+    private JPanel createLostFoundPanel() {
+    JPanel p = new JPanel(new BorderLayout());
+    String[] cols = {"ID", "Description", "Date Found", "Location", "Status", "Claimed By", "Claimed Date"};
+    DefaultTableModel model = new DefaultTableModel(cols, 0) {
+        public boolean isCellEditable(int r, int c) { return false; }
+    };
+    JTable table = new JTable(model);
+
+    JButton btnRefresh = new JButton("Refresh");
+    JButton btnAdd = new JButton("Add");
+    JButton btnEdit = new JButton("Edit");
+    JButton btnDelete = new JButton("Delete");
+
+    JPanel top = new JPanel();
+    top.add(btnRefresh);
+    top.add(btnAdd);
+    top.add(btnEdit);
+    top.add(btnDelete);
+
+    p.add(top, BorderLayout.NORTH);
+    p.add(new JScrollPane(table), BorderLayout.CENTER);
+
+    LostFoundDAO lfDAO = new LostFoundDAO();
+
+    btnRefresh.addActionListener(e -> {
+        try {
+            model.setRowCount(0);
+            for (LostFound lf : lfDAO.listAll()) {
+                model.addRow(new Object[]{
+                        lf.getFoundId(),
+                        lf.getDescription(),
+                        lf.getDateFound(),
+                        lf.getLocationFound(),
+                        lf.getStatus(),
+                        lf.getClaimedByPersonId(),
+                        lf.getClaimedDate()
+                });
+            }
+        } catch (SQLException ex) {
+            showError(ex);
+        }
+    });
+
+    btnAdd.addActionListener(e -> {
+        LostFoundDialog dlg = new LostFoundDialog(this, null);
+        dlg.setVisible(true);
+        if (dlg.saved()) {
+            try {
+                lfDAO.insert(dlg.getLostFound());
+                btnRefresh.doClick();
+            } catch (SQLException ex) {
+                showError(ex);
+            }
+        }
+    });
+
+    btnEdit.addActionListener(e -> {
+        int id = getSelectedIdFromTable(table, model);
+        if (id < 0) return;
+
+        try {
+            LostFound lf = lfDAO.listAll().stream()
+                    .filter(x -> x.getFoundId() == id)
+                    .findFirst()
+                    .orElse(null);
+
+            LostFoundDialog dlg = new LostFoundDialog(this, lf);
+            dlg.setVisible(true);
+
+            if (dlg.saved()) {
+                lfDAO.update(dlg.getLostFound());
+                btnRefresh.doClick();
+            }
+        } catch (SQLException ex) {
+            showError(ex);
+        }
+    });
+
+    btnDelete.addActionListener(e -> {
+        int id = getSelectedIdFromTable(table, model);
+        if (id < 0) return;
+
+        if (JOptionPane.showConfirmDialog(
+                this,
+                "Delete selected Lost & Found item?",
+                "Confirm",
+                JOptionPane.YES_NO_OPTION
+        ) != JOptionPane.YES_OPTION) return;
+
+        try {
+            lfDAO.delete(id);
+            btnRefresh.doClick();
+        } catch (SQLException ex) {
+            showError(ex);
+        }
+    });
+
+    btnRefresh.doClick();
+    return p;
+    }
+}
