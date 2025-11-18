@@ -1,22 +1,16 @@
 package org.example;
 
-import org.example.Reviews;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.time.LocalDate;
-
+import java.time.LocalDateTime;
 
 public class ReviewsFormDialog extends JDialog {
-    private final JTextField txtReviewID = new JTextField(6);
-    private final JTextField txtCamperID = new JTextField(6); 
-    private final JTextField txtCounselorID = new JTextField(6); 
-    private final JSpinner spMax = new JSpinner(new SpinnerNumberModel(0, 0, 10, 1));
+    private final JTextField txtPersonID = new JTextField(6);
+    private final JSpinner spRating = new JSpinner(new SpinnerNumberModel(0, 0, 10, 1));
     private final JTextField txtComments = new JTextField(35);
     private boolean saved = false;
     private Reviews reviews;
-
 
     public ReviewsFormDialog(Frame owner, Reviews reviews) {
         super(owner, true);
@@ -25,7 +19,6 @@ public class ReviewsFormDialog extends JDialog {
         init();
         pack();
         setLocationRelativeTo(owner);
-
     }
 
     private void init() {
@@ -34,22 +27,17 @@ public class ReviewsFormDialog extends JDialog {
         c.insets = new Insets(6,6,6,6);
         c.anchor = GridBagConstraints.WEST;
 
-        c.gridx=0; c.gridy=0; form.add(new JLabel("Review ID:"), c);
-        c.gridx=1; form.add(txtReviewID, c);
-        c.gridx=0; c.gridy++; form.add(new JLabel("Camper ID"), c); 
-        c.gridx=1; form.add(txtCamperID, c); 
-        c.gridx=0; c.gridy++; form.add(new JLabel("Counselor ID:"), c);
-        c.gridx=1; form.add(txtCounselorID, c);
+        c.gridx=0; c.gridy=0; form.add(new JLabel("Person ID:"), c);
+        c.gridx=1; form.add(txtPersonID, c);
         c.gridx=0; c.gridy++; form.add(new JLabel("Rating:"), c);
-        c.gridx=1; form.add(spMax, c);
-        c.gridx=0; c.gridy++; form.add(new JLabel("Comments:"), c); 
-        c.gridx=1; form.add(txtComments, c); 
-        
+        c.gridx=1; form.add(spRating, c);
+        c.gridx=0; c.gridy++; form.add(new JLabel("Comments:"), c);
+        c.gridx=1; form.add(txtComments, c);
 
         if (reviews.getReviewID() != 0) {
-            txtCounselorID.setText(String.valueOf(reviews.getCounselorID()));
-            txtComments.setText(String.valueOf(reviews.getComments()));
-            spMax.setValue(reviews.getRating());
+            txtPersonID.setText(String.valueOf(reviews.getPersonID()));
+            txtComments.setText(reviews.getComments());
+            spRating.setValue(reviews.getRating());
         }
 
         JPanel buttons = new JPanel();
@@ -65,46 +53,25 @@ public class ReviewsFormDialog extends JDialog {
     }
 
     private void onOk(ActionEvent ev) {
-        if (txtReviewID.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Review ID required", "Validation", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-      
-        try {
-            reviews.setReviewID(Integer.parseInt(txtReviewID.getText().trim().isEmpty() ? "0" : txtReviewID.getText().trim()));
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Review ID must be a number", "Validation", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        if (txtCamperID.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Camper ID required", "Validation", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-      
-        try {
-            reviews.setCamperID(Integer.parseInt(txtCamperID.getText().trim().isEmpty() ? "0" : txtCamperID.getText().trim()));
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Camper ID must be a number", "Validation", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-
-        if (txtCounselorID.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Counselor ID required", "Validation", JOptionPane.WARNING_MESSAGE);
+        if (txtPersonID.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Person ID required", "Validation", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         try {
-            reviews.setCounselorID(Integer.parseInt(txtCounselorID.getText().trim().isEmpty() ? "0" : txtCounselorID.getText().trim()));
+            reviews.setPersonID(Integer.parseInt(txtPersonID.getText().trim()));
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Counselor ID must be a number", "Validation", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Person ID must be a number", "Validation", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-
-        reviews.setRating((Integer) spMax.getValue());
+        reviews.setRating((Integer) spRating.getValue());
         reviews.setComments(txtComments.getText());
+
+        if (reviews.getReviewID() == 0) {
+            reviews.setReviewDate(LocalDateTime.now());
+        }
+
         saved = true;
         dispose();
     }
