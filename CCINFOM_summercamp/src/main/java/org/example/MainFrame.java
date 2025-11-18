@@ -15,6 +15,7 @@ public class MainFrame extends JFrame {
     private final ItemDAO itemDAO = new ItemDAO();
     private final ActivityDAO activityDAO = new ActivityDAO();
     private final TransactionDAO transactionDAO = new TransactionDAO();
+    private final ReviewsDAO reviewsDAO = new ReviewsDAO();
 
     public MainFrame() {
         setTitle("Summer Camp DB App");
@@ -27,6 +28,7 @@ public class MainFrame extends JFrame {
         tabs.addTab("Items", createItemPanel());
         tabs.addTab("Activities", createActivityPanel());
         tabs.addTab("Transactions", createTransactionPanel());
+        tabs.addTab("Reviews", createReviewsPanel());
         add(tabs);
     }
 
@@ -252,10 +254,12 @@ public class MainFrame extends JFrame {
         return p;
     }
 
-     private JPanel createReviewsPanel() {
+    private JPanel createReviewsPanel() {
         JPanel p = new JPanel(new BorderLayout());
-        String[] cols = {"Review ID","Camper ID", "Counselor ID","Rating","Comments", "Review Date"};
-        DefaultTableModel model = new DefaultTableModel(cols,0) { public boolean isCellEditable(int r,int c){return false;}};
+        String[] cols = {"Review ID", "Person ID", "Rating", "Comments", "Review Date"};
+        DefaultTableModel model = new DefaultTableModel(cols,0) {
+            public boolean isCellEditable(int r,int c){return false;}
+        };
         JTable table = new JTable(model);
         JButton btnRefresh = new JButton("Refresh");
         JButton btnAdd = new JButton("Add");
@@ -270,15 +274,30 @@ public class MainFrame extends JFrame {
             try {
                 model.setRowCount(0);
                 List<Reviews> all = reviewsDAO.listAll();
-                for (Reviews r: all) model.addRow(new Object[]{r.getReviewID(), r.getCamperID(), r.getCounselorID(), r.getRating(), r.getComments(), r.getReviewDate()});
-            } catch (SQLException ex) { showError(ex); }
+                for (Reviews r: all) {
+                    model.addRow(new Object[]{
+                            r.getReviewID(),
+                            r.getPersonID(),
+                            r.getRating(),
+                            r.getComments(),
+                            r.getReviewDate()
+                    });
+                }
+            } catch (SQLException ex) {
+                showError(ex);
+            }
         });
 
         btnAdd.addActionListener(e -> {
             ReviewsFormDialog dlg = new ReviewsFormDialog(this, null);
             dlg.setVisible(true);
             if (dlg.saved()) {
-                try { reviewsDAO.insert(dlg.getReviews()); btnRefresh.doClick(); } catch (SQLException ex) { showError(ex); }
+                try {
+                    reviewsDAO.insert(dlg.getReviews());
+                    btnRefresh.doClick();
+                } catch (SQLException ex) {
+                    showError(ex);
+                }
             }
         });
 
@@ -286,18 +305,34 @@ public class MainFrame extends JFrame {
             int id = getSelectedIdFromTable(table, model);
             if (id < 0) return;
             try {
-                Reviews r = reviewsDAO.listAll().stream().filter(x->x.getReviewID()==id).findFirst().orElse(null);
+                Reviews r = reviewsDAO.listAll().stream()
+                        .filter(x -> x.getReviewID() == id)
+                        .findFirst()
+                        .orElse(null);
                 ReviewsFormDialog dlg = new ReviewsFormDialog(this, r);
                 dlg.setVisible(true);
-                if (dlg.saved()) { reviewsDAO.update(dlg.getReviews()); btnRefresh.doClick(); }
-            } catch (SQLException ex) { showError(ex); }
+                if (dlg.saved()) {
+                    reviewsDAO.update(dlg.getReviews());
+                    btnRefresh.doClick();
+                }
+            } catch (SQLException ex) {
+                showError(ex);
+            }
         });
 
         btnDelete.addActionListener(e -> {
             int id = getSelectedIdFromTable(table, model);
             if (id < 0) return;
-            if (JOptionPane.showConfirmDialog(this,"Delete selected activity?","Confirm",JOptionPane.YES_NO_OPTION)!=JOptionPane.YES_OPTION) return;
-            try { reviewsDAO.delete(id); btnRefresh.doClick(); } catch (SQLException ex) { showError(ex); }
+            if (JOptionPane.showConfirmDialog(this,
+                    "Delete selected review?",
+                    "Confirm",
+                    JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) return;
+            try {
+                reviewsDAO.delete(id);
+                btnRefresh.doClick();
+            } catch (SQLException ex) {
+                showError(ex);
+            }
         });
 
         btnRefresh.doClick();
@@ -320,5 +355,4 @@ public class MainFrame extends JFrame {
         catch (NumberFormatException ex) { return -1; }
     }
 }
-
 
