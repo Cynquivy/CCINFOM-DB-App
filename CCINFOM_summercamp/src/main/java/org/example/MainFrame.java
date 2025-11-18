@@ -18,6 +18,7 @@ public class MainFrame extends JFrame {
     private final TransactionDAO transactionDAO = new TransactionDAO();
     private final ReviewsDAO reviewsDAO = new ReviewsDAO();
     private final CampAreaDAO campAreaDAO = new CampAreaDAO();
+    private final CampGroupDAO campGroupDAO = new CampGroupDAO();
 
     public MainFrame() {
         setTitle("Summer Camp DB App");
@@ -33,6 +34,8 @@ public class MainFrame extends JFrame {
         tabs.addTab("Transactions", createTransactionPanel());
         tabs.addTab("Reviews", createReviewsPanel());
         tabs.addTab("Camp Area", createCampAreaPanel());
+        tabs.addTab("Camp Groups", createCampGroupPanel());
+
         add(tabs);
     }
 
@@ -495,7 +498,125 @@ public class MainFrame extends JFrame {
         btnRefresh.doClick();
         return p;
     }
-    
+
+    private JPanel createCampGroupPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        String[] cols = {"ID", "Group Code", "Counselor (Person ID)", "Area ID", "Capacity"};
+
+        DefaultTableModel model = new DefaultTableModel(cols, 0) {
+            public boolean isCellEditable(int row, int col) { return false; }
+        };
+
+        JTable table = new JTable(model);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        JButton btnRefresh = new JButton("Refresh");
+        JButton btnAdd = new JButton("Add");
+        JButton btnEdit = new JButton("Edit");
+        JButton btnDelete = new JButton("Delete");
+
+        JPanel top = new JPanel();
+        top.add(btnRefresh);
+        top.add(btnAdd);
+        top.add(btnEdit);
+        top.add(btnDelete);
+
+        panel.add(top, BorderLayout.NORTH);
+        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+        
+        ActionListener refreshAction = e -> {
+            try {
+                model.setRowCount(0);
+                List<CampGroup> groups = campGroupDAO.listAll();
+                for (CampGroup g : groups) {
+                    model.addRow(new Object[]{
+                            g.getGroupId(),
+                            g.getGroupCode(),
+                            g.getCounselorId(),
+                            g.getAreaId(),
+                            g.getCapacity()
+                    });
+                }
+            } catch (SQLException ex) {
+                showError(ex);
+            }
+        };
+        btnRefresh.addActionListener(refreshAction);
+        
+        btnAdd.addActionListener(e -> {
+            CampGroupFormDialog dlg = new CampGroupFormDialog(this, null);
+            dlg.setVisible(true);
+            if (dlg.saved()) {
+                try {
+                    CampGroup group = dlg.getCampGroup();
+                    if (group.getGroupId() == null) {
+                        campGroupDAO.insert(group);
+                    } else {
+                        campGroupDAO.update(group);
+                    }
+                    refreshAction.actionPerformed(null);
+                } catch (SQLException ex) {
+                    showError(ex);
+                }
+            }
+        });
+        
+        btnEdit.addActionListener(e -> {
+            int id = getSelectedIdFromTable(table, model);
+            if (id < 0) {
+                JOptionPane.showMessageDialog(this, "Please select a group to edit.");
+                return;
+            }
+            try {
+                CampGroup g = campGroupDAO.findById(id);
+                if (g == null) {
+                    JOptionPane.showMessageDialog(this, "Selected group not found.");
+                    return;
+                }
+
+                CampGroupFormDialog dlg = new CampGroupFormDialog(this, g);
+                dlg.setVisible(true);
+
+                if (dlg.saved()) {
+                    CampGroup updatedGroup = dlg.getCampGroup();
+                    if (updatedGroup.getGroupId() != null) {
+                        // Only update if ID exists
+                        boolean updated = campGroupDAO.update(updatedGroup);
+                        if (!updated) JOptionPane.showMessageDialog(this, "Update failed.");
+                    }
+                    refreshAction.actionPerformed(null);
+                }
+            } catch (SQLException ex) {
+                showError(ex);
+            }
+        });
+        
+        btnDelete.addActionListener(e -> {
+            int id = getSelectedIdFromTable(table, model);
+            if (id < 0) {
+                JOptionPane.showMessageDialog(this, "Please select a group to delete.");
+                return;
+            }
+            if (JOptionPane.showConfirmDialog(
+                    this,
+                    "Delete selected group?",
+                    "Confirm",
+                    JOptionPane.YES_NO_OPTION
+            ) != JOptionPane.YES_OPTION) return;
+
+            try {
+                boolean ok = campGroupDAO.delete(id);
+                if (!ok) JOptionPane.showMessageDialog(this, "Delete failed.");
+                refreshAction.actionPerformed(null);
+            } catch (SQLException ex) {
+                showError(ex);
+            }
+        });
+
+        btnRefresh.doClick();
+        return panel;
+    }
+
     private void showError(Exception ex) {
         ex.printStackTrace();
         JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
@@ -512,4 +633,3 @@ public class MainFrame extends JFrame {
         catch (NumberFormatException ex) { return -1; }
     }
 }
-
