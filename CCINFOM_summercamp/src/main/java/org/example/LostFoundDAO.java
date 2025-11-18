@@ -58,7 +58,7 @@ public class LostFoundDAO {
             ps.setString(1, lf.getDescription());
 
             if (lf.getDateFound() != null)
-                ps.setTimestamp(2, Timestamp.valueOf(lf.getDateFound()));
+                ps.setDate(2, Date.valueOf(lf.getDateFound()));
             else
                 ps.setNull(2, Types.DATE);
 
@@ -71,7 +71,7 @@ public class LostFoundDAO {
                 ps.setNull(5, Types.INTEGER);
 
             if (lf.getClaimedDate() != null)
-                ps.setTimestamp(6, Timestamp.valueOf(lf.getClaimedDate()));
+                ps.setDate(6, Date.valueOf(lf.getClaimedDate()));
             else
                 ps.setNull(6, Types.DATE);
 
@@ -99,7 +99,7 @@ public class LostFoundDAO {
             ps.setString(1, lf.getDescription());
 
             if (lf.getDateFound() != null)
-                ps.setTimestamp(2, Timestamp.valueOf(lf.getDateFound()));
+                ps.setDate (2, Date.valueOf(lf.getDateFound()));
             else
                 ps.setNull(2, Types.DATE);
 
@@ -112,7 +112,7 @@ public class LostFoundDAO {
                 ps.setNull(5, Types.INTEGER);
 
             if (lf.getClaimedDate() != null)
-                ps.setTimestamp(6, Timestamp.valueOf(lf.getClaimedDate()));
+                ps.setDate(6, Date.valueOf(lf.getClaimedDate()));
             else
                 ps.setNull(6, Types.DATE);
 
