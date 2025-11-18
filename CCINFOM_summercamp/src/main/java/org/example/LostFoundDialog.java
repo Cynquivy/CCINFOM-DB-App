@@ -58,7 +58,7 @@ public class LostFoundDialog extends JDialog {
         row++;
 
         //editing existing object
-        if (lostFound.getFoundId() != 0) {
+        if (lostFound.getFoundId() != null && lostFound.getFoundId() != 0) {
             txtDescription.setText(lostFound.getDescription());
             txtLocation.setText(lostFound.getLocationFound());
             cbStatus.setSelectedItem(lostFound.getStatus());
@@ -87,6 +87,10 @@ public class LostFoundDialog extends JDialog {
         if (txtDescription.getText().trim().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Description is required", "Validation", JOptionPane.WARNING_MESSAGE);
             return;
+        }
+        if (txtLocation.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Location found is required", "Validation", JOptionPane.WARNING_MESSAGE);
+        return;
         }
 
         lostFound.setDescription(txtDescription.getText().trim());
