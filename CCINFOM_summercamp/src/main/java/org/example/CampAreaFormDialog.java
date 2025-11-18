@@ -3,7 +3,6 @@ package org.example;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.sql.SQLException;
 
 public class CampAreaFormDialog extends JDialog {
@@ -17,10 +16,12 @@ public class CampAreaFormDialog extends JDialog {
     private final CampAreaDAO dao = new CampAreaDAO();
     private boolean saved = false;
 
-    public CampAreaFormDialog(Frame owner) {
+    public CampAreaFormDialog(Frame owner, CampArea area) {
         super(owner, true);
+        this.area = (area == null ? new CampArea() : area);
         initComponents();
-        setTitle("Camp Area");
+        loadDataToForm();
+        setTitle((this.area.getAreaId() <= 0) ? "New Camp Area" : "Edit Camp Area");
         pack();
         setLocationRelativeTo(owner);
     }
@@ -36,6 +37,7 @@ public class CampAreaFormDialog extends JDialog {
         JPanel p = new JPanel(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(4,4,4,4);
+
         c.gridx = 0; c.gridy = 0; c.anchor = GridBagConstraints.EAST;
         p.add(new JLabel("Name:"), c);
         c.gridx = 1; c.anchor = GridBagConstraints.WEST;
@@ -57,57 +59,52 @@ public class CampAreaFormDialog extends JDialog {
         getContentPane().add(p, BorderLayout.CENTER);
         getContentPane().add(btns, BorderLayout.SOUTH);
 
-        btnSave.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                onSave();
-            }
-        });
-        btnCancel.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                onCancel();
-            }
-        });
+        btnSave.addActionListener(this::onSave);
+        btnCancel.addActionListener(e -> onCancel());
     }
 
-    public void edit(CampArea area) {
-        this.area = area;
-        if (area != null) {
-            tfName.setText(area.getAreaName());
-            spCapacity.setValue(area.getCapacity() == null ? 0 : area.getCapacity());
-            cbAvailable.setSelected(area.isAvailable());
-            setTitle("Edit Camp Area");
-        } else {
+    private void loadDataToForm() {
+        if (area.getAreaId() <= 0) {
             tfName.setText("");
             spCapacity.setValue(0);
             cbAvailable.setSelected(true);
-            setTitle("New Camp Area");
+        } else {
+            tfName.setText(area.getAreaName());
+            spCapacity.setValue(area.getCapacity() == null ? 0 : area.getCapacity());
+            cbAvailable.setSelected(area.isAvailable());
         }
     }
 
-    private void onSave() {
+    private void onSave(ActionEvent e) {
         String name = tfName.getText().trim();
         if (name.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Name is required", "Validation", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Name is required",
+                    "Validation", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
         Integer capacity = (Integer) spCapacity.getValue();
         boolean available = cbAvailable.isSelected();
 
         try {
-            if (area == null) {
-                CampArea newArea = new CampArea(name, capacity, available);
-                dao.insert(newArea);
+            area.setAreaName(name);
+            area.setCapacity(capacity);
+            area.setAvailable(available);
+
+            if (area.getAreaId() <= 0) {
+                dao.insert(area);
             } else {
-                area.setAreaName(name);
-                area.setCapacity(capacity);
-                area.setAvailable(available);
                 dao.update(area);
             }
+
             saved = true;
             dispose();
+
         } catch (SQLException ex) {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error saving camp area: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    "Error saving camp area: " + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -116,5 +113,6 @@ public class CampAreaFormDialog extends JDialog {
         dispose();
     }
 
-    public boolean isSaved() { return saved; }
+    public boolean saved() { return saved; }
+    public CampArea getCampArea() { return area; }
 }
