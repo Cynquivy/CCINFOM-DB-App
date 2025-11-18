@@ -16,6 +16,7 @@ public class MainFrame extends JFrame {
     private final ActivityDAO activityDAO = new ActivityDAO();
     private final TransactionDAO transactionDAO = new TransactionDAO();
     private final ReviewsDAO reviewsDAO = new ReviewsDAO();
+    private final CampAreaDAO campAreaDAO = new CampAreaDAO();
 
     public MainFrame() {
         setTitle("Summer Camp DB App");
@@ -29,7 +30,7 @@ public class MainFrame extends JFrame {
         tabs.addTab("Activities", createActivityPanel());
         tabs.addTab("Transactions", createTransactionPanel());
         tabs.addTab("Reviews", createReviewsPanel());
-        tabs.addTab("Lost and Found", createLostFoundPanel());
+        tabs.addTab("Camp Area", createCampAreaPanel());
         add(tabs);
     }
 
@@ -339,7 +340,108 @@ public class MainFrame extends JFrame {
         btnRefresh.doClick();
         return p;
     }
+    
+    private JPanel createCampAreaPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        String[] cols = {"ID", "Name", "Capacity", "Available"};
+        DefaultTableModel model = new DefaultTableModel(cols, 0) {
+            public boolean isCellEditable(int row, int col) { return false; }
+        };
 
+        JTable table = new JTable(model);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        JButton btnRefresh = new JButton("Refresh");
+        JButton btnAdd = new JButton("Add");
+        JButton btnEdit = new JButton("Edit");
+        JButton btnDelete = new JButton("Delete");
+
+        JPanel top = new JPanel();
+        top.add(btnRefresh);
+        top.add(btnAdd);
+        top.add(btnEdit);
+        top.add(btnDelete);
+
+        panel.add(top, BorderLayout.NORTH);
+        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+        
+        ActionListener refreshAction = e -> {
+            try {
+                model.setRowCount(0);
+                List<CampArea> areas = campAreaDAO.listAll(); // safer to use listAll()
+                for (CampArea a : areas) {
+                    model.addRow(new Object[]{
+                            a.getAreaId(),
+                            a.getAreaName(),
+                            a.getCapacity(),
+                            a.isAvailable()
+                    });
+                }
+            } catch (SQLException ex) {
+                showError(ex);
+            }
+        };
+        btnRefresh.addActionListener(refreshAction);
+        
+        btnAdd.addActionListener(e -> {
+            CampAreaFormDialog dlg = new CampAreaFormDialog(this, null);
+            dlg.setVisible(true);
+            if (dlg.saved()) {
+                try {
+                    campAreaDAO.insert(dlg.getCampArea());
+                    refreshAction.actionPerformed(null);
+                } catch (SQLException ex) {
+                    showError(ex);
+                }
+            }
+        });
+        
+        btnEdit.addActionListener(e -> {
+            int id = getSelectedIdFromTable(table, model);
+            if (id < 0) {
+                JOptionPane.showMessageDialog(this, "Please select a camp area to edit.");
+                return;
+            }
+            try {
+                CampArea area = campAreaDAO.findById(id);
+                if (area == null) {
+                    JOptionPane.showMessageDialog(this, "Selected camp area not found.");
+                    return;
+                }
+                CampAreaFormDialog dlg = new CampAreaFormDialog(this, area);
+                dlg.setVisible(true);
+                if (dlg.saved()) {
+                    boolean updated = campAreaDAO.update(dlg.getCampArea());
+                    if (!updated) JOptionPane.showMessageDialog(this, "Update failed.");
+                    refreshAction.actionPerformed(null);
+                }
+            } catch (SQLException ex) {
+                showError(ex);
+            }
+        });
+        
+        btnDelete.addActionListener(e -> {
+            int id = getSelectedIdFromTable(table, model);
+            if (id < 0) {
+                JOptionPane.showMessageDialog(this, "Please select a camp area to delete.");
+                return;
+            }
+            if (JOptionPane.showConfirmDialog(this, "Delete selected camp area?", "Confirm", JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)
+                return;
+
+            try {
+                boolean deleted = campAreaDAO.delete(id);
+                if (!deleted) JOptionPane.showMessageDialog(this, "Delete failed.");
+                refreshAction.actionPerformed(null);
+            } catch (SQLException ex) {
+                showError(ex);
+            }
+        });
+
+        btnRefresh.doClick();
+        return panel;
+    }
+    
     private void showError(Exception ex) {
         ex.printStackTrace();
         JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
@@ -354,106 +456,5 @@ public class MainFrame extends JFrame {
         if (idObj instanceof Number) return ((Number) idObj).intValue();
         try { return Integer.parseInt(idObj.toString()); }
         catch (NumberFormatException ex) { return -1; }
-    }
-
-    private JPanel createLostFoundPanel() {
-    JPanel p = new JPanel(new BorderLayout());
-    String[] cols = {"ID", "Description", "Date Found", "Location", "Status", "Claimed By", "Claimed Date"};
-    DefaultTableModel model = new DefaultTableModel(cols, 0) {
-        public boolean isCellEditable(int r, int c) { return false; }
-    };
-    JTable table = new JTable(model);
-
-    JButton btnRefresh = new JButton("Refresh");
-    JButton btnAdd = new JButton("Add");
-    JButton btnEdit = new JButton("Edit");
-    JButton btnDelete = new JButton("Delete");
-
-    JPanel top = new JPanel();
-    top.add(btnRefresh);
-    top.add(btnAdd);
-    top.add(btnEdit);
-    top.add(btnDelete);
-
-    p.add(top, BorderLayout.NORTH);
-    p.add(new JScrollPane(table), BorderLayout.CENTER);
-
-    LostFoundDAO lfDAO = new LostFoundDAO();
-
-    btnRefresh.addActionListener(e -> {
-        try {
-            model.setRowCount(0);
-            for (LostFound lf : lfDAO.listAll()) {
-                model.addRow(new Object[]{
-                        lf.getFoundId(),
-                        lf.getDescription(),
-                        lf.getDateFound(),
-                        lf.getLocationFound(),
-                        lf.getStatus(),
-                        lf.getClaimedByPersonId(),
-                        lf.getClaimedDate()
-                });
-            }
-        } catch (SQLException ex) {
-            showError(ex);
-        }
-    });
-
-    btnAdd.addActionListener(e -> {
-        LostFoundDialog dlg = new LostFoundDialog(this, null);
-        dlg.setVisible(true);
-        if (dlg.saved()) {
-            try {
-                lfDAO.insert(dlg.getLostFound());
-                btnRefresh.doClick();
-            } catch (SQLException ex) {
-                showError(ex);
-            }
-        }
-    });
-
-    btnEdit.addActionListener(e -> {
-        int id = getSelectedIdFromTable(table, model);
-        if (id < 0) return;
-
-        try {
-            LostFound lf = lfDAO.listAll().stream()
-                    .filter(x -> x.getFoundId() == id)
-                    .findFirst()
-                    .orElse(null);
-
-            LostFoundDialog dlg = new LostFoundDialog(this, lf);
-            dlg.setVisible(true);
-
-            if (dlg.saved()) {
-                lfDAO.update(dlg.getLostFound());
-                btnRefresh.doClick();
-            }
-        } catch (SQLException ex) {
-            showError(ex);
-        }
-    });
-
-    btnDelete.addActionListener(e -> {
-        int id = getSelectedIdFromTable(table, model);
-        if (id < 0) return;
-
-        if (JOptionPane.showConfirmDialog(
-                this,
-                "Delete selected Lost & Found item?",
-                "Confirm",
-                JOptionPane.YES_NO_OPTION
-        ) != JOptionPane.YES_OPTION) return;
-
-        try {
-            lfDAO.delete(id);
-            btnRefresh.doClick();
-        } catch (SQLException ex) {
-            showError(ex);
-        }
-    });
-
-    btnRefresh.doClick();
-    return p;
     }
 }
