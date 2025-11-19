@@ -7,15 +7,12 @@ import javax.swing.text.JTextComponent;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 
 public class ActivityRegForm extends JDialog {
     private final JTextField txtRegistrationId = new JTextField(6);
     private final JTextField txtActivityId = new JTextField(6); 
     private final JTextField txtPersonId = new JTextField(6);
     private final JTextField txtStatus = new JTextField(15); 
-    private final JTextField txtRegisteredAt = new JTextField(10); 
     private boolean saved = false;
     private ActivityReg activityReg;
 
@@ -40,8 +37,6 @@ public class ActivityRegForm extends JDialog {
         c.gridx=1; form.add(txtPersonId, c); 
         c.gridx=0; c.gridy++; form.add(new JLabel("Status:"), c);
         c.gridx=1; form.add(txtStatus, c);
-        c.gridx=0; c.gridy++; form.add(new JLabel("Registered At:"), c);
-        c.gridx=1; form.add(txtRegisteredAt, c);
 
         if (activityReg.getRegistrationId() != 0) {
             txtActivityId.setText(String.valueOf(activityReg.getActivityId()));
@@ -69,13 +64,6 @@ public class ActivityRegForm extends JDialog {
             JOptionPane.showMessageDialog(this, "Activity ID required", "Validation", JOptionPane.WARNING_MESSAGE);
             return;
         }   
-
-        try {
-            activityReg.setActivityId(Integer.parseInt(txtActivityId.getText().trim()));
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Activity ID must be a number", "Validation", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
         
         if (txtPersonId.getText().trim().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Person ID required", "Validation", JOptionPane.WARNING_MESSAGE);
@@ -88,19 +76,6 @@ public class ActivityRegForm extends JDialog {
             JOptionPane.showMessageDialog(this, "Person ID must be a number", "Validation", JOptionPane.WARNING_MESSAGE);
             return;
         }
-
-        String registeredAt = txtRegisteredAt.getText().trim();
-        if (!registeredAt.isEmpty()) {
-            try {
-                activityReg.setRegisteredAt(LocalDate.parse(registeredAt)); 
-            } catch (DateTimeParseException ex) {
-                JOptionPane.showMessageDialog(this, "Registered Date must be in yyyy-MM-dd format", "Validation", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-        } else {
-            activityReg.setRegisteredAt(null); 
-        }
-
     
         activityReg.setStatus(txtStatus.getText().trim().isEmpty() ? "registered" : txtStatus.getText().trim());
     
