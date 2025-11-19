@@ -1,109 +1,63 @@
 package org.example;
 
+import org.example.DBConnection;
+import org.example.Activity;
+
 import java.sql.*;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ActivityRegDAO {
-
-    public List<ActivityReg> listAll() throws SQLException {
-        String sql = """
-            SELECT registration_id, activity_id, person_id, registered_at, status
-            FROM activity_registration
-            ORDER BY registration_id
-        """;
-
-        List<ActivityReg> out = new ArrayList<>();
-
+public class ActivityDAO {
+    public List<Activity> listAll() throws SQLException {
+        String sql = "SELECT activity_id, name, area_id, max_participants FROM activities ORDER BY activity_id";
+        List<Activity> out = new ArrayList<>();
         try (Connection c = DBConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
-
             while (rs.next()) {
-                ActivityReg reg = new ActivityReg();
-
-                reg.setRegistrationId(rs.getInt("registration_id"));
-                reg.setActivityId(rs.getInt("activity_id"));
-                reg.setPersonId(rs.getInt("person_id"));
-
-                Timestamp ts = rs.getTimestamp("registered_at");
-                reg.setRegisteredAt(ts != null ? ts.toLocalDateTime() : null);
-
-                reg.setStatus(rs.getString("status"));
-
-                out.add(reg);
+                out.add(new Activity(
+                        rs.getInt("activity_id"),
+                        rs.getString("name"),
+                        rs.getInt("area_id"),
+                        rs.getInt("max_participants")
+                ));
             }
         }
-
         return out;
     }
 
-    public int insert(ActivityReg aReg) throws SQLException {
-        String sql = """
-            INSERT INTO activity_registration
-            (activity_id, person_id, registered_at, status)
-            VALUES (?, ?, ?, ?)
-        """;
-
+    public int insert(Activity a) throws SQLException {
+        String sql = "INSERT INTO activities (name, area_id, max_participants) VALUES (?,?,?)";
         try (Connection c = DBConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-
-            ps.setInt(1, aReg.getActivityId());
-            ps.setInt(2, aReg.getPersonId());
-
-            LocalDateTime regAt = aReg.getRegisteredAt() != null ? aReg.getRegisteredAt() : LocalDateTime.now();
-            ps.setTimestamp(3, Timestamp.valueOf(regAt));
-
-            if (aReg.getStatus() != null)
-                ps.setString(4, aReg.getStatus());
-            else
-                ps.setNull(4, Types.VARCHAR);
-
+            ps.setString(1, a.getName());
+            ps.setInt(2, a.getAreaId());
+            ps.setInt(3, a.getMaxParticipants());
             ps.executeUpdate();
-
             try (ResultSet gk = ps.getGeneratedKeys()) {
                 if (gk.next()) return gk.getInt(1);
             }
         }
-
         return -1;
     }
 
-    public void update(ActivityReg aReg) throws SQLException {
-        String sql = """
-            UPDATE activity_registration
-            SET activity_id=?, person_id=?, registered_at=?, status=?
-            WHERE registration_id=?
-        """;
-
+    public void update(Activity a) throws SQLException {
+        String sql = "UPDATE activities SET name=?, area_id=?, max_participants=? WHERE activity_id=?";
         try (Connection c = DBConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
-
-            ps.setInt(1, aReg.getActivityId());
-            ps.setInt(2, aReg.getPersonId());
-
-            LocalDateTime regAt = aReg.getRegisteredAt() != null ? aReg.getRegisteredAt() : LocalDateTime.now();
-            ps.setTimestamp(3, Timestamp.valueOf(regAt));
-
-            if (aReg.getStatus() != null)
-                ps.setString(4, aReg.getStatus());
-            else
-                ps.setNull(4, Types.VARCHAR);
-
-            ps.setInt(5, aReg.getRegistrationId());
-
+            ps.setString(1, a.getName());
+            ps.setInt(2, a.getAreaId());
+            ps.setInt(3, a.getMaxParticipants());
+            ps.setInt(4, a.getActivityId());
             ps.executeUpdate();
         }
     }
 
-    public void delete(int registrationId) throws SQLException {
-        String sql = "DELETE FROM activity_registration WHERE registration_id=?";
-
+    public void delete(int activityId) throws SQLException {
+        String sql = "DELETE FROM activities WHERE activity_id=?";
         try (Connection c = DBConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
-
-            ps.setInt(1, registrationId);
+            ps.setInt(1, activityId);
             ps.executeUpdate();
         }
     }
