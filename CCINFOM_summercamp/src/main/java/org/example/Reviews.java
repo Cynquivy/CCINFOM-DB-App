@@ -1,83 +1,34 @@
 package org.example;
 
-import java.sql.*;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDate;
 
-public class ReviewsDAO {
-    public List<Reviews> listAll() throws SQLException {
-        String sql = "SELECT review_id, person_id, rating, comments, review_date FROM reviews ORDER BY review_id";
-        List<Reviews> out = new ArrayList<>();
-        try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                Reviews r = new Reviews();
-                r.setReviewID(rs.getInt("review_id"));
-                r.setPersonID(rs.getInt("person_id"));
-                r.setRating(rs.getInt("rating"));
-                r.setComments(rs.getString("comments"));
-                java.sql.Date sqlDate = rs.getDate("review_date");
-                if (sqlDate != null) {
-                    r.setReviewDate(sqlDate.toLocalDate());
-                }
+public class Reviews {
+    private int reviewID;
+    private int personID;
+    private int rating;
+    private String comments;
+    private LocalDate reviewDate;
 
-                out.add(r);
-            }
-        }
-        return out;
+    public Reviews(){}
+    public Reviews(int reviewID, int personID, int rating, String comments, LocalDate reviewDate){
+        this.reviewID = reviewID;
+        this.personID = personID;
+        this.rating = rating;
+        this.comments = comments;
+        this.reviewDate = reviewDate;
     }
 
-    // insert review
+    public int getReviewID(){ return reviewID; }
+    public void setReviewID(int reviewID){ this.reviewID = reviewID; }
+    public int getPersonID(){ return personID; }
+    public void setPersonID(int personID){ this.personID = personID; }
+    public int getRating(){ return rating; }
+    public void setRating(int rating){ this.rating = rating; }
+    public String getComments(){ return comments;}
+    public void setComments(String comments){ this.comments = comments; }
+    public LocalDate getReviewDate(){ return reviewDate; }
+    public void setReviewDate(LocalDate reviewDate){ this.reviewDate = reviewDate; }
 
-    public static int insert(Reviews r) throws SQLException {
-        String insertReview = "INSERT INTO reviews (person_id, rating, comments, review_date) VALUES (?,?,?,?)";
-        try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(insertReview, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setInt(1, r.getPersonID());
-            ps.setInt(2, r.getRating());
-            ps.setString(3, r.getComments());
-            
-            // Changed to use LocalDate
-            if (r.getReviewDate() != null) {
-                ps.setDate(4, java.sql.Date.valueOf(r.getReviewDate()));
-            } else {
-                ps.setNull(4, Types.DATE);
-            }
-            
-            ps.executeUpdate();
-            
-            // Simplified - just return the generated ID
-            try (ResultSet gk = ps.getGeneratedKeys()) {
-                if (gk.next()) {
-                    return gk.getInt(1);
-                }
-            }
-        }
-        return -1;
-    }
-
-
-    public void update(Reviews r) throws SQLException {
-        String sql = "UPDATE reviews SET person_id=?, rating=?, comments=?, review_date=? WHERE review_id=?";
-        try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setInt(1, r.getPersonID());
-            ps.setInt(2, r.getRating());
-            ps.setString(3, r.getComments());
-            ps.setDate(4, java.sql.Date.valueOf(r.getReviewDate()));
-            ps.setInt(5, r.getReviewID());
-            ps.executeUpdate();
-        }
-    }
-
-    public void delete(int reviewID) throws SQLException {
-        String sql = "DELETE FROM reviews WHERE review_id=?";
-        try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setInt(1, reviewID);
-            ps.executeUpdate();
-        }
-    }
+    @Override
+    public String toString(){ return reviewID + "-" + rating; }
 }
