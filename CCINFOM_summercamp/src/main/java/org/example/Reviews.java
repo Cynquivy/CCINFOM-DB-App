@@ -1,16 +1,16 @@
 package org.example;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class Reviews {
     private int reviewID;
     private int personID;
     private int rating;
     private String comments;
-    private LocalDate reviewDate;
+    private LocalDateTime reviewDate;
 
     public Reviews(){}
-    public Reviews(int reviewID, int personID, int rating, String comments, LocalDate reviewDate){
+    public Reviews(int reviewID, int personID, int rating, String comments, LocalDateTime reviewDate){
         this.reviewID = reviewID;
         this.personID = personID;
         this.rating = rating;
@@ -26,8 +26,8 @@ public class Reviews {
     public void setRating(int rating){ this.rating = rating; }
     public String getComments(){ return comments;}
     public void setComments(String comments){ this.comments = comments; }
-    public LocalDate getReviewDate(){ return reviewDate; }
-    public void setReviewDate(LocalDate reviewDate){ this.reviewDate = reviewDate; }
+    public LocalDateTime getReviewDate(){ return reviewDate; }
+    public void setReviewDate(LocalDateTime reviewDate){ this.reviewDate = reviewDate; }
 
     @Override
     public String toString(){ return reviewID + "-" + rating; }
