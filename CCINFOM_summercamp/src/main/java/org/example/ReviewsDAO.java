@@ -1,6 +1,7 @@
 package org.example;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,10 +18,11 @@ public class ReviewsDAO {
                 r.setPersonID(rs.getInt("person_id"));
                 r.setRating(rs.getInt("rating"));
                 r.setComments(rs.getString("comments"));
-                Timestamp timestamp = rs.getTimestamp("review_date");
-                if (timestamp != null) {
-                    r.setReviewDate(timestamp.toLocalDateTime());
+                java.sql.Date sqlDate = rs.getDate("review_date");
+                if (sqlDate != null) {
+                    r.setReviewDate(sqlDate.toLocalDate());
                 }
+
                 out.add(r);
             }
         }
@@ -30,35 +32,32 @@ public class ReviewsDAO {
     // insert review
 
     public static int insert(Reviews r) throws SQLException {
-        String insertReview = "INSERT INTO reviews (person_id, rating, comments) VALUES (?,?,?)";
+        String insertReview = "INSERT INTO reviews (person_id, rating, comments, review_date) VALUES (?,?,?,?)";
         try (Connection c = DBConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(insertReview, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, r.getPersonID());
             ps.setInt(2, r.getRating());
             ps.setString(3, r.getComments());
+            
+            // Changed to use LocalDate
+            if (r.getReviewDate() != null) {
+                ps.setDate(4, java.sql.Date.valueOf(r.getReviewDate()));
+            } else {
+                ps.setNull(4, Types.DATE);
+            }
+            
             ps.executeUpdate();
+            
+            // Simplified - just return the generated ID
             try (ResultSet gk = ps.getGeneratedKeys()) {
                 if (gk.next()) {
-                    int generatedId = gk.getInt(1);
-                    String selectSql = "SELECT review_id, person_id, rating, comments, review_date FROM reviews WHERE review_id = ?";
-                    try (PreparedStatement selectPs = c.prepareStatement(selectSql)) {
-                        selectPs.setInt(1, generatedId);
-                        try (ResultSet rs = selectPs.executeQuery()) {
-                            if (rs.next()) {
-                                r.setReviewID(rs.getInt("review_id"));
-                                r.setPersonID(rs.getInt("person_id"));
-                                r.setRating(rs.getInt("rating"));
-                                r.setComments(rs.getString("comments"));
-                                r.setReviewDate(rs.getTimestamp("review_date").toLocalDateTime());
-                            }
-                        }
-                    }
-                    return generatedId;
+                    return gk.getInt(1);
                 }
             }
         }
         return -1;
     }
+
 
     public void update(Reviews r) throws SQLException {
         String sql = "UPDATE reviews SET person_id=?, rating=?, comments=?, review_date=? WHERE review_id=?";
@@ -67,7 +66,7 @@ public class ReviewsDAO {
             ps.setInt(1, r.getPersonID());
             ps.setInt(2, r.getRating());
             ps.setString(3, r.getComments());
-            ps.setTimestamp(4, Timestamp.valueOf(r.getReviewDate()));
+            ps.setDate(4, java.sql.Date.valueOf(r.getReviewDate()));
             ps.setInt(5, r.getReviewID());
             ps.executeUpdate();
         }
