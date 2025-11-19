@@ -4,7 +4,6 @@ import org.example.DBConnection;
 import org.example.ActivityReg;
 
 import java.sql.*;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,8 +20,8 @@ public class ActivityRegDAO {
                 reg.setRegistrationId(rs.getInt("registration_id"));
                 reg.setActivityId(rs.getInt("activity_id"));
                 reg.setPersonId(rs.getInt("person_id"));
-                Date cd = rs.getDate("registered_at");
-                reg.setRegisteredAt(reg != null ? cd.toLocalDate() : null);
+                Timestamp ts = rs.getTimestamp("registered_at");
+                reg.setRegisteredAt(ts != null ? ts.toLocalDateTime() : null);
                 reg.setStatus(rs.getString("status")); 
                 out.add(reg); 
             }
@@ -35,15 +34,10 @@ public class ActivityRegDAO {
         String sql = "INSERT INTO activity_registration (activity_id, person_id, registered_at, status) VALUES (?,?,?,?)";
         try (Connection c = DBConnection.getConnection();
             PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-             
             ps.setInt(1, aReg.getActivityId());
             ps.setInt(2, aReg.getPersonId());
-
-            if (aReg.getRegisteredAt() != null)
-                ps.setDate(3, Date.valueOf(aReg.getRegisteredAt()));
-            else
-                ps.setNull(3, Types.DATE);
-            
+            LocalDateTime regAt = aReg.getRegisteredAt() != null ? aReg.getRegisteredAt() : LocalDateTime.now();
+            ps.setTimestamp(3, Timestamp.valueOf(regAt));
             ps.setString(4, aReg.getStatus()); 
             ps.executeUpdate();
             try (ResultSet gk = ps.getGeneratedKeys()) {
@@ -57,17 +51,12 @@ public class ActivityRegDAO {
         String sql = "UPDATE activity_registration SET activity_id=?, person_id=?, registered_at=?, status=? WHERE registration_id=?";
         try (Connection c = DBConnection.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
-            
-            ps.setInt(1, aReg.getActivityId());
-            ps.setInt(2, aReg.getPersonId());
-
-            if (aReg.getRegisteredAt() != null)
-                ps.setDate (3, Date.valueOf(aReg.getRegisteredAt()));
-            else
-                ps.setNull(3, Types.DATE);
-
-            ps.setString(4, aReg.getStatus()); 
-            ps.setInt(5, aReg.getRegistrationId());
+            ps.setInt(1, aReg.getRegistrationId());
+            ps.setInt(2, aReg.getActivityId());
+            LocalDateTime regAt = aReg.getRegisteredAt() != null ? aReg.getRegisteredAt() : LocalDateTime.now();
+            ps.setTimestamp(3, Timestamp.valueOf(regAt));
+            ps.setInt(4, aReg.getPersonId());
+            ps.setString(5, aReg.getStatus()); 
             ps.executeUpdate();
         }
     }
