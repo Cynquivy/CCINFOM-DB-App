@@ -3,7 +3,7 @@ package org.example;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 public class ReviewsFormDialog extends JDialog {
     private final JTextField txtPersonID = new JTextField(6);
@@ -69,7 +69,7 @@ public class ReviewsFormDialog extends JDialog {
         reviews.setComments(txtComments.getText());
 
         if (reviews.getReviewID() == 0) {
-            reviews.setReviewDate(LocalDateTime.now());
+            reviews.setReviewDate(LocalDate.now());
         }
 
         saved = true;
