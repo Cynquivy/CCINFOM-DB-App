@@ -122,7 +122,7 @@ public class MainFrame extends JFrame {
             try {
                 model.setRowCount(0);
                 List<Item> all = itemDAO.listAll();
-                for (Item it: all) model.addRow(new Object[]{it.getItemId(), it.getItemType(), it.getName(), it.getPrice(), it.getQuantityInStock()});
+                for (Item it: all) model.addRow(new Object[]{it.getItemId(), it.getItemType(), it.getName(), it.getDescription(), it.getPrice(), it.getQuantityInStock()});
             } catch (SQLException ex) { showError(ex); }
         });
 
@@ -842,3 +842,4 @@ public class MainFrame extends JFrame {
     return p;
     }
 }
+
