@@ -15,6 +15,9 @@ public class ItemFormDialog extends JDialog {
     private boolean saved = false;
     private Item item;
 
+    private static final int MAX_QUANTITY = 10;
+
+
     public ItemFormDialog(Frame owner, Item item) {
         super(owner, true);
         setTitle(item == null ? "Add Item" : "Edit Item");
@@ -66,22 +69,54 @@ public class ItemFormDialog extends JDialog {
     }
 
     private void onOk(ActionEvent ev) {
-        if (txtName.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Name required", "Validation", JOptionPane.WARNING_MESSAGE);
+        String name = txtName.getText().trim();
+        String priceStr = txtPrice.getText().trim();
+        
+        if (name.isEmpty()) {
+            showValidationError("Name is required.");
             return;
         }
-        item.setItemType((String) cbType.getSelectedItem());
-        item.setName(txtName.getText().trim());
-        item.setDescription(txtDesc.getText().trim());
+        
+        if (priceStr.isEmpty()) {
+            showValidationError("Price is required.");
+            return;
+        }
+        
+        double price;
+
         try {
-            item.setPrice(Double.parseDouble(txtPrice.getText().trim().isEmpty() ? "0" : txtPrice.getText().trim()));
+            price = Double.parseDouble(priceStr);
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Invalid price", "Validation", JOptionPane.WARNING_MESSAGE);
+            showValidationError("Price must be a valid number.");
             return;
         }
-        item.setQuantityInStock((Integer) spQty.getValue());
+        
+        if (price < 0) {
+            showValidationError("Price cannot be negative. Please enter a value of 0 or greater.");
+            return;
+        }
+        
+        int quantity = (Integer) spQty.getValue();
+        if (quantity < 0) {
+            showValidationError("Quantity cannot be negative.");
+            return;
+        }
+        if (quantity > MAX_QUANTITY) {
+            showValidationError("Quantity cannot exceed " + MAX_QUANTITY + " items.");
+            return;
+        }
+        
+        item.setItemType((String) cbType.getSelectedItem());
+        item.setName(name);
+        item.setDescription(txtDesc.getText().trim());
+        item.setPrice(price);
+        item.setQuantityInStock(quantity);
         saved = true;
         dispose();
+    }
+
+     void showValidationError(String message) {
+        JOptionPane.showMessageDialog(this, message, "Validation Error", JOptionPane.WARNING_MESSAGE);
     }
 
     public boolean saved() { return saved; }
