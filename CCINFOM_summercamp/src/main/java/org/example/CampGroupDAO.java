@@ -14,7 +14,7 @@ public class CampGroupDAO {
 
     public List<CampGroup> listAll() throws SQLException {
         List<CampGroup> list = new ArrayList<>();
-        String sql = "SELECT group_id, group_code, counselor_id, area_id, capacity FROM " + TABLE + " ORDER BY group_code";
+        String sql = "SELECT group_id, group_code, person_id, area_id, capacity FROM " + TABLE + " ORDER BY group_code";
 
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
@@ -24,7 +24,7 @@ public class CampGroupDAO {
                 CampGroup g = new CampGroup();
                 g.setGroupId(rs.getInt("group_id"));
                 g.setGroupCode(rs.getString("group_code"));
-                g.setCounselorId((Integer) rs.getObject("counselor_id"));
+                g.setCounselorId((Integer) rs.getObject("person_id"));
                 g.setAreaId((Integer) rs.getObject("area_id"));
                 g.setCapacity((Integer) rs.getObject("capacity"));
                 list.add(g);
@@ -34,7 +34,7 @@ public class CampGroupDAO {
     }
 
     public CampGroup findById(int id) throws SQLException {
-        String sql = "SELECT group_id, group_code, counselor_id, area_id, capacity FROM " + TABLE + " WHERE group_id = ?";
+        String sql = "SELECT group_id, group_code, person_id, area_id, capacity FROM " + TABLE + " WHERE group_id = ?";
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
@@ -43,7 +43,7 @@ public class CampGroupDAO {
                     CampGroup g = new CampGroup();
                     g.setGroupId(rs.getInt("group_id"));
                     g.setGroupCode(rs.getString("group_code"));
-                    g.setCounselorId((Integer) rs.getObject("counselor_id"));
+                    g.setCounselorId((Integer) rs.getObject("person_id"));
                     g.setAreaId((Integer) rs.getObject("area_id"));
                     g.setCapacity((Integer) rs.getObject("capacity"));
                     return g;
@@ -54,7 +54,7 @@ public class CampGroupDAO {
     }
 
     public void insert(CampGroup g) throws SQLException {
-        String sql = "INSERT INTO " + TABLE + " (group_code, counselor_id, area_id, capacity) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO " + TABLE + " (group_code, person_id, area_id, capacity) VALUES (?, ?, ?, ?)";
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -74,7 +74,7 @@ public class CampGroupDAO {
     }
 
     public boolean update(CampGroup g) throws SQLException {
-        String sql = "UPDATE " + TABLE + " SET group_code = ?, counselor_id = ?, area_id = ?, capacity = ? WHERE group_id = ?";
+        String sql = "UPDATE " + TABLE + " SET group_code = ?, person_id = ?, area_id = ?, capacity = ? WHERE group_id = ?";
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
